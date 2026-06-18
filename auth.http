@@ -1,0 +1,95 @@
+@baseUrl = http://localhost:8080
+@authUrl = {{baseUrl}}/auth
+
+### 1. Register a new user
+# Run this first — creates the account.
+POST {{authUrl}}/register
+Content-Type: application/json
+
+{
+	"username": "alice",
+	"password": "hunter2"
+}
+
+### 2. Register the same user again (should fail with 400)
+POST {{authUrl}}/register
+Content-Type: application/json
+
+{
+	"username": "alice",
+	"password": "hunter2"
+}
+
+### 3. Login
+# Copy the "accessToken" and "refreshToken" from the response below
+# into the @accessToken / @refreshToken variables further down,
+# or use the REST Client's variable-from-response feature.
+# @name login
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+	"username": "alice",
+	"password": "hunter2"
+}
+
+### 4. Login with wrong password (should fail with 401/403)
+POST {{authUrl}}/login
+Content-Type: application/json
+
+{
+	"username": "alice",
+	"password": "wrong-password"
+}
+
+###
+# ----------------------------------------------------------------
+# Paste tokens from the login response above into these variables,
+# then run the requests below.
+# ----------------------------------------------------------------
+@accessToken = paste-access-token-here
+@refreshToken = paste-refresh-token-here
+
+### 5. Call a protected endpoint with the access token
+# Replace /some/protected/endpoint with a real endpoint once you add one.
+# Without any other controllers yet, this just demonstrates the header —
+# expect a 404 (route doesn't exist) rather than a 401/403 if the token is valid.
+GET {{baseUrl}}/some/protected/endpoint
+Authorization: Bearer {{accessToken}}
+
+### 6. Call a protected endpoint WITHOUT a token (should fail with 401/403)
+GET {{baseUrl}}/some/protected/endpoint
+
+### 7. Refresh the access token
+# Rotates both tokens — copy the NEW refreshToken from the response
+# into @refreshToken above before calling refresh or logout again.
+POST {{authUrl}}/refresh
+Content-Type: application/json
+
+{
+	"refreshToken": "{{refreshToken}}"
+}
+
+### 8. Refresh with an invalid/already-used token (should fail with 400)
+POST {{authUrl}}/refresh
+Content-Type: application/json
+
+{
+	"refreshToken": "not-a-real-token"
+}
+
+### 9. Logout
+POST {{authUrl}}/logout
+Content-Type: application/json
+
+{
+	"refreshToken": "{{refreshToken}}"
+}
+
+### 10. Refresh again after logout (should fail — token was revoked)
+POST {{authUrl}}/refresh
+Content-Type: application/json
+
+{
+	"refreshToken": "{{refreshToken}}"
+}
